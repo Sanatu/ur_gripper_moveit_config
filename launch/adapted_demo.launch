@@ -1,0 +1,37 @@
+<launch>
+
+  <!-- Arguments -->
+  <arg name="robot_ip" default="192.168.1.102" /> <!-- Update with your robot's IP -->
+  <arg name="pipeline" default="ompl" />
+  <arg name="use_rviz" default="true" />
+  <arg name="rviz_config" default="$(find ur_gripper_moveit_config)/moveit.rviz" />
+
+  <!-- Robot Driver -->
+  <!-- Start the UR robot driver to communicate with the real UR5 -->
+  <include file="$(find ur_robot_driver)/launch/ur5_bringup.launch">
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="use_tool_communication" value="false" />
+  </include>
+
+  <!-- Robot Description -->
+  <!-- Load the provided URDF with the gripper attached -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+    <param name="robot_description" command="$(find xacro)/xacro '$(find ur_gripper_moveit_config)/config/gazebo_ur5_robot.urdf'" />
+  </node>
+
+  <!-- MoveIt! -->
+  <!-- Start MoveIt! with trajectory execution enabled -->
+  <include file="$(dirname)/move_group.launch">
+    <arg name="allow_trajectory_execution" value="true" />
+    <arg name="pipeline" value="$(arg pipeline)" />
+    <arg name="moveit_controller_manager" value="ros_control" />
+    <arg name="load_robot_description" value="false" /> <!-- Robot description is already loaded -->
+  </include>
+
+  <!-- RViz -->
+  <!-- Launch RViz for motion planning visualization -->
+  <include file="$(dirname)/moveit_rviz.launch" if="$(arg use_rviz)">
+    <arg name="rviz_config" value="$(arg rviz_config)" />
+  </include>
+
+</launch>
